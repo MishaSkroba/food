@@ -98,13 +98,16 @@ window.addEventListener('DOMContentLoaded', () => {
     const modal = document.querySelector('.modal');
     const modalClose = document.querySelector('.modal__close');
 
+    function openModal() {
+        //modal.classList.add('show'); //
+        //modal.classList.remove('hide');
+        modal.classList.toggle('show');
+        document.body.style.overflow = 'hidden';
+        clearInterval(moadlTimerId); // если функция уже выполнялась (пользователь открывал модальное окно кнопкой) то окно не будет окрываться по таймауту
+    }
+
     modalTrigger.forEach(item => {
-        item.addEventListener('click', () => {
-            //modal.classList.add('show'); //
-            //modal.classList.remove('hide');
-            modal.classList.toggle('show');
-            document.body.style.overflow = 'hidden';
-        });
+        item.addEventListener('click', openModal);
     });
 
     function closeModal() {
@@ -129,4 +132,16 @@ window.addEventListener('DOMContentLoaded', () => {
             closeModal();
         }
     });
+
+    const moadlTimerId = setTimeout(openModal, 100000);
+
+    function showModalByScroll() {
+        if(window.pageYOffset /*количество пикселей, на которое прокручен документ по вертикали*/ + document.documentElement.clientHeight >= document.documentElement.scrollHeight) { //document.documentElement возвращает элемент Element , который является коренным элементом документа  document
+        openModal();
+
+        window.removeEventListener('scroll', showModalByScroll); //
+        }
+    }
+
+    window.addEventListener('scroll', showModalByScroll);
 });
