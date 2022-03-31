@@ -216,4 +216,58 @@ window.addEventListener('DOMContentLoaded', () => {
         21,
         ".menu .container"
     ).render();
+
+    //ФОРМЫ ПО ОТПРАВКЕ ДАННЫХ НА СЕРВЕР. На странице мы имеем 2 формы чтоб не дублировать код мы создадим функцию по отправке запроса и применим ее к каждой из форм
+    const forms = document.querySelectorAll('form');  //получаем все формы со страницы
+    const message = { //создадим обьект который будет сожержать в себе сообщения для пользователя  об отправке данных с сайта. Эти сообщения будут передоваться в блок который будет динамически создаваться в функции postData
+        loading: 'Загрузка',
+        success: 'Спасибо. Скоро мы с вами свяжемся',
+        failure: 'Что-то пошло не так...'
+    }
+
+    forms.forEach(item => { //Навешиваем функцию на каждую форму
+        postData(item);
+    });
+
+    function postData(form) { //создаем функцию в которую мы будем передавать форму
+        form.addEventListener('submit', (e) => { //навешиваем обработчик события submit. Данное событие выполняется если мы нажимаем  enter  в заполненном поле формы, липо кликаем по кнопке формы  и отправляет данныей формы. В качестве аргумента передаем обьект событие, чтоб отменить стандартное поведение браузера. 
+            e.preventDefault(); //отменяем стандартное поведение браузера. Сабмит не будет теперь перезагружать страницу а будет отправлять данные без перезагрузки
+            const statusMessage = document.createElement('div'); //сождаем элемент верстки (он сейчас только в js)
+            statusMessage.classList.add('status'); // добавляем данному элементу класс
+            statusMessage.textContent = message.loading; //присваиваем телу элемента сообщение "Загрузка". Логично что это сообщение всегда будет первым
+            form.append(statusMessage); //И в конце отправляем элемент в HTML. 
+        
+            const request  = new XMLHttpRequest(); //Создаем обьект XMLHttpRequest
+            request.open('POST', 'server.php'); //настраиваем запрос через метод open. Аргументы: 'метод','путь'
+            //Следующая задача отправить введенные на клиенте данные. Можно получить из через получение элементов страницы, сохранение в переменных, формирование нового обьекта и т.д. Но есть более простой, современный метод - обьект formData.
+            //Данные не всегда нужно передавать в формате JSON. Первый пример быдет передача в form-data
+            //request.setRequestHeader('Content-type', 'multipart/form-data');  //Когда мы используем  XMLHttpRequest + formData нам не нужно прописывать заголовки
+            request.setRequestHeader('Content-type', 'application/json'); //если хотим передать на сервер json
+            const formData = new FormData(form); //для того чтоб можно было пользоваться этим обьектом, нужно чтоб в HTML все интерактивые элементы содержали атрибут name! Иначе form-data не найдет значения поля.
+
+            //FormData это формат который нельза просто переделать в json. Нам нужно создать пустой обьект, методом перебора перебрать обьект FormData и вставить в новосозданный обьект значения. После методом stringify присвоить данные в формате json переменной.
+            const object = {};
+            formData.forEach(function(value, key){
+                object[key] = value;
+            });
+            const json = JSON.stringify(object);
+
+            //request.send(formData); //отправляем данные. formData - body запроса.  В нем содержатся элементы формы (237 строка)
+            request.send(json); //передаем json. Нужно помнить что php не умеет работать с json поэтому в php файле мы пропишем декодер
+
+            request.addEventListener('load', () => { //отлавливаем событие- конец загрузки запроса
+                if (request.status === 200) {
+                    console.log(request.response);
+                    statusMessage.textContent = message.success;
+                    form.reset(); //данный метод очищает форму
+                    setTimeout(() => {
+                        statusMessage.remove(); //так мы удалим динамически сгенерированный блок
+                    }, 2000);
+                } else {
+                    statusMessage.textContent = message.failure;
+                }
+            });
+
+        });
+    }
 });
