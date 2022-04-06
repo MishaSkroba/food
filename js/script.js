@@ -96,32 +96,29 @@ window.addEventListener('DOMContentLoaded', () => {
     //MODAL WINDOW
     const modalTrigger = document.querySelectorAll('[data-modal]');
     const modal = document.querySelector('.modal');
-    const modalClose = document.querySelector('.modal__close');
-
-    function openModal() {
-        //modal.classList.add('show'); //
-        //modal.classList.remove('hide');
-        modal.classList.toggle('show');
-        document.body.style.overflow = 'hidden';
-        clearInterval(moadlTimerId); // если функция уже выполнялась (пользователь открывал модальное окно кнопкой) то окно не будет окрываться по таймауту
-    }
 
     modalTrigger.forEach(item => {
         item.addEventListener('click', openModal);
     });
 
+    function openModal() {
+        modal.classList.add('show');
+        modal.classList.remove('hide');
+        //modal.classList.toggle('show');
+        document.body.style.overflow = 'hidden';
+        clearInterval(modalTimerId); // если функция уже выполнялась (пользователь открывал модальное окно кнопкой) то окно не будет окрываться по таймауту
+    }
+
     function closeModal() {
-        //modal.classList.add('hide');
-        //modal.classList.remove('show');
-        modal.classList.toggle('show'); //для того чтоб скрыть модальное окно можно использовать add/remove методы, а можно воспльзоваться toggle
+        modal.classList.add('hide');
+        modal.classList.remove('show');
+        //modal.classList.toggle('show'); //для того чтоб скрыть модальное окно можно использовать add/remove методы, а можно воспльзоваться toggle
         document.body.style.overflow = '';
     }
 
-    modalClose.addEventListener('click', closeModal);
-
     //Скрываем модальное окно по клику на паранжу
     modal.addEventListener('click', (e) => {
-        if (e.target === modal) { //сравниваем цель события с элементом
+        if (e.target === modal || e.target.getAttribute('data-close') === '') { //сравниваем цель события с элементом
             closeModal();
         }
     });
@@ -133,7 +130,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const moadlTimerId = setTimeout(openModal, 10000);
+    const modalTimerId = setTimeout(openModal, 300000);
 
     function showModalByScroll() {
         if(window.pageYOffset /*количество пикселей, на которое прокручен документ по вертикали*/ + document.documentElement.clientHeight >= document.documentElement.scrollHeight) { //document.documentElement возвращает элемент Element , который является коренным элементом документа  document
@@ -220,7 +217,8 @@ window.addEventListener('DOMContentLoaded', () => {
     //ФОРМЫ ПО ОТПРАВКЕ ДАННЫХ НА СЕРВЕР. На странице мы имеем 2 формы чтоб не дублировать код мы создадим функцию по отправке запроса и применим ее к каждой из форм
     const forms = document.querySelectorAll('form');  //получаем все формы со страницы
     const message = { //создадим обьект который будет сожержать в себе сообщения для пользователя  об отправке данных с сайта. Эти сообщения будут передоваться в блок который будет динамически создаваться в функции postData
-        loading: 'Загрузка',
+        //loading: 'Загрузка',  //удалили в рамках добавления спинера
+        loading: 'img/form/spinner.svg',    
         success: 'Спасибо. Скоро мы с вами свяжемся',
         failure: 'Что-то пошло не так...'
     }
@@ -232,14 +230,24 @@ window.addEventListener('DOMContentLoaded', () => {
     function postData(form) { //создаем функцию в которую мы будем передавать форму
         form.addEventListener('submit', (e) => { //навешиваем обработчик события submit. Данное событие выполняется если мы нажимаем  enter  в заполненном поле формы, липо кликаем по кнопке формы  и отправляет данныей формы. В качестве аргумента передаем обьект событие, чтоб отменить стандартное поведение браузера. 
             e.preventDefault(); //отменяем стандартное поведение браузера. Сабмит не будет теперь перезагружать страницу а будет отправлять данные без перезагрузки
-            const statusMessage = document.createElement('div'); //сождаем элемент верстки (он сейчас только в js)
+            
+            /* РЕДАКТИРУЕМ ДАННЫЙ БЛОК В РАМКАХ ДОБАВЛЕНИЯ СПИНЕРА. СМОТРИ НИЖЕ
+            const statusMessage = document.createElement('div'); //создаем элемент верстки (он сейчас только в js)
             statusMessage.classList.add('status'); // добавляем данному элементу класс
-            statusMessage.textContent = message.loading; //присваиваем телу элемента сообщение "Загрузка". Логично что это сообщение всегда будет первым
-            form.append(statusMessage); //И в конце отправляем элемент в HTML. 
+            statusMessage.textContent = message.loading; //присваиваем телу элемента сообщение "Загрузка". Логично что это сообщение всегда будет первым */
+            
+            const statusMessage = document.createElement('img'); //создаем элемент верстки (он сейчас только в js)
+            statusMessage.src = message.loading; //присваиваем атрибуту значение
+            statusMessage.style.cssText = `
+                display: block;
+                margin: 0 auto;
+            `;
+            //form.append(statusMessage); //И в конце отправляем элемент в HTML. (Убрали, т.к. в нижней форме спинер отображается справа от кнопки. Метод ниже поможет избежать данной проблемы)
+            form.insertAdjacentElement('afterend', statusMessage); //отправляем элемент в HTML
         
             const request  = new XMLHttpRequest(); //Создаем обьект XMLHttpRequest
             request.open('POST', 'server.php'); //настраиваем запрос через метод open. Аргументы: 'метод','путь'
-            //Следующая задача отправить введенные на клиенте данные. Можно получить из через получение элементов страницы, сохранение в переменных, формирование нового обьекта и т.д. Но есть более простой, современный метод - обьект formData.
+            //Следующая задача отправить введенные на клиенте данные. Можно получить их через получение элементов страницы, сохранение в переменных, формирование нового обьекта и т.д. Но есть более простой, современный метод - обьект formData.
             //Данные не всегда нужно передавать в формате JSON. Первый пример быдет передача в form-data
             //request.setRequestHeader('Content-type', 'multipart/form-data');  //Когда мы используем  XMLHttpRequest + formData нам не нужно прописывать заголовки
             request.setRequestHeader('Content-type', 'application/json'); //если хотим передать на сервер json
@@ -258,16 +266,49 @@ window.addEventListener('DOMContentLoaded', () => {
             request.addEventListener('load', () => { //отлавливаем событие- конец загрузки запроса
                 if (request.status === 200) {
                     console.log(request.response);
-                    statusMessage.textContent = message.success;
+                    //statusMessage.textContent = message.success;  //мы удалили команду в рамках задачи с модальным окном информирования пользователя. теперь сообщение отображается при помощи функции
+                    showThanksModal(message.success);
                     form.reset(); //данный метод очищает форму
-                    setTimeout(() => {
+                    //setTimeout(() => {   //мы удалили таймаут в рамках задачи с модальным окном информирования пользователя. Мы будем удалять данное окно сразу после конца загрузки запроса.
                         statusMessage.remove(); //так мы удалим динамически сгенерированный блок
-                    }, 2000);
+                    //}, 2000);
                 } else {
-                    statusMessage.textContent = message.failure;
+                    showThanksModal(message.failure);
                 }
             });
 
         });
     }
+
+    //Создатдим модальное окно информирования пользователя (благодарности)
+    //Эта задача может быть решена с использованием уже существующего модального окна. Для этого мы должны взять блок modal__dialog спрятать его содержимое и динамически создать новый блок информирующий пользователя 
+    function showThanksModal(message) {
+        const prevModalDialog = document.querySelector('.modal__dialog'); //чтоб удалить содержимое блока мы его сперва получаем.
+        prevModalDialog.classList.add("hide"); //присваеваем КЛАСС hide в котором прописано display: none
+        
+        //теперь нам нужно открыть модальное окно. Для этого есть ранее написанная функция
+        openModal(); 
+        //поскольку ненужный контент модального окна мы удалили, нам нужно наполнить окно необходимым содержимым. Для этого создадим блок обертку
+        const thanksModal = document.createElement('div');
+        //пирсвоим этому новому элементу теже стили что были у модалки
+        thanksModal.classList.add('modal__dialog');
+        //и в конце создаем необходимую верстку
+        thanksModal.innerHTML = `
+        <div class="modal__content">
+        <div class="modal__close" data-close>&times;</div>  
+        <div class="modal__title">${message}</div>      
+        </div>
+        `;
+        //данный элемент создан, но только внутри JS. Не забываем что его нужно поместить на страницу.
+        document.querySelector('.modal').append(thanksModal);
+
+        //Теперь предусморим ситуацию когда пользователю необходимо еще раз открыть модальное окно с формой (предыдущее). В этом случае мы должны удалить созданное модальное окно и вернуть старое. Можно воспользоваться таймаутом для выполнения данной задачи.
+        setTimeout(()=>{
+            thanksModal.remove(); //удаляем модалку
+            prevModalDialog.classList.add('show'); //снова отображаем форму
+            prevModalDialog.classList.remove('hide');
+            closeModal(); //закрываем окно чтоб пользователь не видел как мы удаляем и отображаем инфу
+        }, 4000);
+    }
+
 });
