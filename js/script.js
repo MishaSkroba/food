@@ -245,38 +245,31 @@ window.addEventListener('DOMContentLoaded', () => {
             //form.append(statusMessage); //И в конце отправляем элемент в HTML. (Убрали, т.к. в нижней форме спинер отображается справа от кнопки. Метод ниже поможет избежать данной проблемы)
             form.insertAdjacentElement('afterend', statusMessage); //отправляем элемент в HTML
         
-            const request  = new XMLHttpRequest(); //Создаем обьект XMLHttpRequest
-            request.open('POST', 'server.php'); //настраиваем запрос через метод open. Аргументы: 'метод','путь'
             //Следующая задача отправить введенные на клиенте данные. Можно получить их через получение элементов страницы, сохранение в переменных, формирование нового обьекта и т.д. Но есть более простой, современный метод - обьект formData.
             //Данные не всегда нужно передавать в формате JSON. Первый пример быдет передача в form-data
-            //request.setRequestHeader('Content-type', 'multipart/form-data');  //Когда мы используем  XMLHttpRequest + formData нам не нужно прописывать заголовки
-            request.setRequestHeader('Content-type', 'application/json'); //если хотим передать на сервер json
-            const formData = new FormData(form); //для того чтоб можно было пользоваться этим обьектом, нужно чтоб в HTML все интерактивые элементы содержали атрибут name! Иначе form-data не найдет значения поля.
 
-            //FormData это формат который нельза просто переделать в json. Нам нужно создать пустой обьект, методом перебора перебрать обьект FormData и вставить в новосозданный обьект значения. После методом stringify присвоить данные в формате json переменной.
+            const formData = new FormData(form); //для того чтоб можно было пользоваться этим обьектом, нужно чтоб в HTML все интерактивые элементы содержали атрибут name! Иначе form-data не найдет значения поля.
             const object = {};
             formData.forEach(function(value, key){
                 object[key] = value;
             });
-            const json = JSON.stringify(object);
 
-            //request.send(formData); //отправляем данные. formData - body запроса.  В нем содержатся элементы формы (237 строка)
-            request.send(json); //передаем json. Нужно помнить что php не умеет работать с json поэтому в php файле мы пропишем декодер
-
-            request.addEventListener('load', () => { //отлавливаем событие- конец загрузки запроса
-                if (request.status === 200) {
-                    console.log(request.response);
-                    //statusMessage.textContent = message.success;  //мы удалили команду в рамках задачи с модальным окном информирования пользователя. теперь сообщение отображается при помощи функции
-                    showThanksModal(message.success);
-                    form.reset(); //данный метод очищает форму
-                    //setTimeout(() => {   //мы удалили таймаут в рамках задачи с модальным окном информирования пользователя. Мы будем удалять данное окно сразу после конца загрузки запроса.
-                        statusMessage.remove(); //так мы удалим динамически сгенерированный блок
-                    //}, 2000);
-                } else {
-                    showThanksModal(message.failure);
-                }
+            fetch('server.php', { //Данная команда позволяет отослать запрос. Первый аргумент это адрес на который уйдет запрос. Возвращает промис.
+                method: "POST",
+                headers: {
+                    'Content-type': 'application/json'
+                },
+                body: JSON.stringify(object)   
+            }).then(data => data.text())  //После того как мы получили респонс мы должны его обработать. Такой командой мы модифицируем респонс, чтоб получить данные которые респонсит сервер. Если респонс не модифицировать, мы получим обьект.
+            .then(data => {
+                console.log(data);
+                showThanksModal(message.success);
+                statusMessage.remove(); //так мы удалим динамически сгенерированный блок
+            }).catch(() => {
+                showThanksModal(message.failure);
+            }).finally(() => {
+                form.reset(); //данный метод очищает форму
             });
-
         });
     }
 
