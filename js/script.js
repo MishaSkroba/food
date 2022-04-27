@@ -142,7 +142,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('scroll', showModalByScroll);
 
-    
+  
+    //Название урока: Используем классы в реальной работе
     // Используем классы для создание карточек меню
     class MenuCard {
         constructor(src, alt, title, descr, price, parentSelector, ...classes) {
@@ -151,10 +152,10 @@ window.addEventListener('DOMContentLoaded', () => {
             this.title = title;
             this.descr = descr;
             this.price = price;
-            this.classes = classes;  //будет содержать массив rest даже если ниодин аргумент не будет передан
+            this.classes = classes;  //будет содержать массив rest даже если ниодин аргумент не будет передан. Название урока: Rest оператор и параметры по умолчанию (ES6)
             this.parent = document.querySelector(parentSelector);
             this.transfer = 9;
-            this.changeToUAH();
+            this.changeToUAH(); //метод вызывает себя. Сам метод находится ниже
         }
 
         changeToUAH () {
@@ -164,7 +165,7 @@ window.addEventListener('DOMContentLoaded', () => {
         render () {
             const element = document.createElement('div');
 
-            if(this.classes.length === 0) {  //данное условие будет проверять rest массив и в случае если он пустой элементу присвоится заданный класс
+            if(this.classes.length === 0) {  //данное условие будет проверять rest массив и в случае если он пустой элементу присвоится заданный по услоывию класс
                 this.classes = 'menu__item';
                 element.classList.add(this.classes);
             } else {
