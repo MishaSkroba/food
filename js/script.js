@@ -304,4 +304,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }, 4000);
     }
 
+    //Мы установили json-server который поможет отсылать POST запросы. Mamp не может их обрабатывать.
+    fetch('http://localhost:3000/menu') //отправим гет запрос на получение данных из bd.json нашей эмитации DB. Данный эндпоинт мы получили при запуске server-json в терменале
+        .then(data => data.json()) //преобразуем json в  JS обьект
+        .then(res => console.log(res)); // результат предыдущей строки отобразим в консоль
+
 });
